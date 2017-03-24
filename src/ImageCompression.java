@@ -25,146 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
-class ImageByte {
-	BufferedImage img;
-	byte[] bytes ;
-	int width = 352 ;
-	int height = 288;
 
-	public void getBytes(String args){
-		img = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
-
-		File file = new File(args);
-		InputStream is;
-		try {
-			is = new FileInputStream(file);
-			long fileSize = file.length();
-			bytes = new byte[(int)fileSize];
-
-			int offset = 0;
-			int numRead = 0;
-
-			while (offset < bytes.length && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
-				offset += numRead;
-			}
-			is.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	public void displayImage(BufferedImage[] image) {
-		// TODO Auto-generated method stub
-		JFrame frame = new JFrame();
-		frame.setTitle("Image Compression using Vector Quantization");
-		GridBagLayout gLayout = new GridBagLayout();
-		frame.getContentPane().setLayout(gLayout);
-
-		ImageIcon originalIcon = new ImageIcon(image[0]);
-		ImageIcon compressIcon = new ImageIcon(image[1]);
-		JLabel originalLabel = new JLabel(originalIcon); 
-		JLabel compressLabel = new JLabel(compressIcon); 
-
-		JPanel originalPanel = new JPanel();
-		TitledBorder originalBorder = getPanelBorder("Original Image");
-		originalPanel.setBorder(originalBorder);
-		originalPanel.add(originalLabel);
-
-		JPanel compressedPanel = new JPanel();
-		TitledBorder compressedBorder = getPanelBorder("Compressed Image");
-		compressedPanel.setBorder(compressedBorder);
-		compressedPanel.add(compressLabel);
-
-		frame.getContentPane().add(originalPanel);
-		frame.getContentPane().add(compressedPanel);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-	}
-
-	private static TitledBorder getPanelBorder(String caption) {
-		// TODO Auto-generated method stub
-		TitledBorder border;
-		border  = new TitledBorder(caption);
-		border.setTitleJustification(TitledBorder.CENTER);
-		border.setTitlePosition(TitledBorder.TOP);
-		return border;
-	}
-
-	public BufferedImage[] getBufferedImage(String fileType, byte[] originalImage, byte[] compressImage) {
-		// TODO Auto-generated method stub
-		BufferedImage[] imageArray = new BufferedImage[2] ;
-		if(fileType.equals("raw")){
-			imageArray[0] = displayGray(originalImage);
-			imageArray[1] = displayGray(compressImage);	
-		}else if(fileType.equals("rgb")){
-			imageArray[0] = displayRGB(originalImage);
-			imageArray[1] = displayRGB(compressImage);
-		}
-		return imageArray;
-	}
-
-	public static BufferedImage displayRGB(byte[] bytesRGB) {
-		// TODO Auto-generated method stub
-		BufferedImage img = new BufferedImage(352, 288, BufferedImage.TYPE_INT_RGB);		
-		int ind = 0;
-		for(int y = 0; y < 288; y++){
-			for(int x = 0; x < 352; x++){
-				byte r = bytesRGB[ind];
-				byte g = bytesRGB[ind+352*288];
-				byte b = bytesRGB[ind+352*288*2];
-				int pixx = 0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
-				ind++;
-				img.setRGB(x,y,pixx);
-			}
-		}
-		return img;
-	}
-	public static BufferedImage displayGray(byte[] bytesGray) {
-		// TODO Auto-generated method stub
-		BufferedImage img = new BufferedImage(352, 288, BufferedImage.TYPE_INT_RGB);		
-		int ind = 0;
-		for(int y = 0; y < 288; y++){
-			for(int x = 0; x < 352; x++){
-				int r = bytesGray[ind];
-				int pixx = 0xff000000 | ((r & 0xff) << 16) | ((r & 0xff) << 8) | (r & 0xff);
-				ind++;
-				img.setRGB(x,y,pixx);
-			}
-		}
-		return img;
-	}
-}
-
-class PixelVector{
-	int x, y;
-
-	PixelVector(int x, int y){
-		this.x = x;
-		this.y = y;
-	}
-}
-
-class CodeVector extends PixelVector{
-	PixelVector vectorCluster;
-	int numVectors;
-	int difference;
-	boolean flag;
-
-	CodeVector(int x, int y){
-		super(x,y);
-		numVectors = 0;
-		difference = 0;
-		vectorCluster = new PixelVector(0, 0);
-		flag = false;
-	}
-
-	
-}
 public class ImageCompression {
 
 	LinkedList<PixelVector> pixelVector = new LinkedList<PixelVector>();
@@ -177,7 +38,7 @@ public class ImageCompression {
 			x = convertByteToInt(bytes[i]);
 			y = convertByteToInt(bytes[i+1]);
 			pixelVector.add(new PixelVector(x,y));
-		}	
+		}
 	}
 	public boolean checkIfSquare(int n){
 		boolean flag = false;
@@ -238,47 +99,19 @@ public class ImageCompression {
 		int x = Math.abs(averageX - codeVector.x);
 		int y =  Math.abs(averageY - codeVector.y);
 		return x + y;
-//		int x = (int) Math.pow(Math.abs(averageX - codeVector.x), 2);
-//		int y = (int) Math.pow(Math.abs(averageY - codeVector.y), 2);
-//		int euclideanDist = (int) Math.sqrt(x + y);
-//		return euclideanDist;
 	}
 
 	public int getAverage(int vectorTotal, int numVectors){
 		return  Math.round(vectorTotal/numVectors);
 	}
 
-//	public int updateCodeBook(CodeVector codeVector) {
-//		// TODO Auto-generated method stub
-//		//boolean convergeCodeVector = false;
-//		int difference = 0;
-//		
-//		if(codeVector.numVectors != 0){
-//			int averageX = getAverage(codeVector.vectorCluster.x, codeVector.numVectors);
-//			int averageY = getAverage(codeVector.vectorCluster.y, codeVector.numVectors);
-//			difference = checkConverge(averageX, averageY, codeVector);
-//
-//			if(codeVector.difference == difference){
-//				difference = 0;
-//				codeVector.flag = true;
-//			}else{
-//				codeVector.flag = false;
-//				codeVector.difference = difference;
-//			}
-//			codeVector.x = averageX;
-//			codeVector.y = averageY;
-//			clear(codeVector);
-//		}
-//		return difference;
-//	}
-	
-	
 	public void clear(CodeVector codeVector) {
 		// TODO Auto-generated method stub
 		codeVector.numVectors = 0;
 		codeVector.vectorCluster.x = 0;
 		codeVector.vectorCluster.y = 0;
 	}
+
 	public boolean isCodeVectorConverge(boolean convergeCodeVector){
 		return !convergeCodeVector;
 	}
@@ -299,10 +132,9 @@ public class ImageCompression {
 			convergeCodeVector = updateCodeBook(codeVector);
 			count ++;
 		}
-
-		System.out.println("Total count: " + count);
+//		System.out.println("Total count: " + count);
 	}
-	
+
 	public boolean updateCodeBook(Map<Integer, CodeVector> codeVector) {
 		boolean flag = true;
 		for(Entry<Integer, CodeVector> codeVectorValue :  codeVector.entrySet()){
@@ -310,7 +142,7 @@ public class ImageCompression {
 				int averageX = getAverage(codeVectorValue.getValue().vectorCluster.x, codeVectorValue.getValue().numVectors);
 				int averageY = getAverage(codeVectorValue.getValue().vectorCluster.y, codeVectorValue.getValue().numVectors);
 				int difference = checkConverge(averageX, averageY, codeVectorValue.getValue());
-				
+
 				if(difference!=codeVectorValue.getValue().difference){
 					codeVectorValue.getValue().x = averageX;
 					codeVectorValue.getValue().y = averageY;
@@ -322,17 +154,28 @@ public class ImageCompression {
 		}
 		return flag;
 	}
+
 	public void quantizeInputVector(byte[] bytes) {
 		// TODO Auto-generated method stub
 		int i =0;
+		double errX = 0, errY = 0;
 		for(i=0; i<bytes.length; i+=2){
 			int x = convertByteToInt(bytes[i]);
 			int y = convertByteToInt(bytes[i+1]);
-			PixelVector vector = new PixelVector(x, y);
-			int key = findNearestCodeWord(vector);
+			PixelVector pixelVector = new PixelVector(x, y);
+			int key = findNearestCodeWord(pixelVector);
 			bytes[i] = (byte) codeVector.get(key).x;
 			bytes[i+1] = (byte) codeVector.get(key).y;
+			
+			errX += Math.pow(codeVector.get(key).x - pixelVector.x, 2);
+			errY += Math.pow(codeVector.get(key).y - pixelVector.y, 2);
 		}
+		
+		double meanX = errX/pixelVector.size();
+		double meanY = errY/pixelVector.size();
+		double meanErr =  (meanX + meanY)/2.0;
+		
+		System.out.println("Computed Mean Square Error(MSE) is " + meanErr);
 	}
 
 	public int convertByteToInt(byte inputByte){
@@ -363,8 +206,9 @@ public class ImageCompression {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String string = "/Users/shruti5488/Documents/JAVA/JavaPractice/String1/ImageCompression/image2.rgb 256";
-		args = string.split(" ");
+//		long time = System.currentTimeMillis();
+//		String string = "/Users/shruti5488/Documents/JAVA/JavaPractice/String1/ImageCompression/image1.rgb 256";
+//		args = string.split(" ");
 		if(args.length!=2){
 			System.out.println("Error: Unkown parameters entered. Please enter in the below format:");
 			System.out.println("ImageCompression myImage.raw N");
@@ -378,27 +222,28 @@ public class ImageCompression {
 			System.exit(0);
 		}
 
-		String fileType = string.split(" ")[0].split("\\.")[1];
-		long time = System.currentTimeMillis();
+		String fileType = args[0].split("\\.")[1];
+		
 		ImageByte originalImage =new ImageByte();
 		originalImage.getBytes(args[0]);
 		ImageByte compressImage = new ImageByte();
 		compressImage.getBytes(args[0]);
 		System.out.println("Please wait while the compressed image is loading..");
 		ImageCompression imageCompress = new ImageCompression();
+		System.out.println("Creating vector space..");
 		imageCompress.createVectorSpace(compressImage.bytes);
+		System.out.println("Initializing codebook..");
 		imageCompress.InitializeCodeVectors(Integer.parseInt(args[1]));
+		System.out.println("Clustering vectors around each code word..");
 		imageCompress.clusterizeVectors();
+		System.out.println("Quantizing input vectors..");
 		imageCompress.quantizeInputVector(compressImage.bytes);
-		System.out.println(imageCompress.codeVector.size());
-		
-		
-		
+
 		BufferedImage[] image = originalImage.getBufferedImage(fileType,originalImage.bytes,compressImage.bytes);
 		System.out.println("The image is compressed successfully !");
 		originalImage.displayImage(image);
-		long time2 = System.currentTimeMillis();
-		NumberFormat formatter = new DecimalFormat("#0.00000");
-		System.out.print("Execution time is " + formatter.format((time2 - time) / 1000d) + " seconds");
+//		long time2 = System.currentTimeMillis();
+//		NumberFormat formatter = new DecimalFormat("#0.00000");
+//		System.out.print("Execution time is " + formatter.format((time2 - time) / 1000d) + " seconds");
 	}
 }
